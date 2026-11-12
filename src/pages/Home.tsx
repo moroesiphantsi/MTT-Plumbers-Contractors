@@ -5,6 +5,7 @@ import {
   Whatshot, SolarPower, Engineering, Home as HomeIcon, Verified, Add,
   DarkMode, LightMode, KeyboardArrowUp, Bolt, Star, Favorite, FavoriteBorder,
   Download, Share, ZoomIn, Search, GridView, ViewQuilt, Shuffle, ContactPage, Slideshow,
+  SmartToy, MyLocation, CheckCircle,
 } from "@mui/icons-material";
 import "./Home.css";
 
@@ -17,7 +18,7 @@ const PHOTOS: { n: number; src: string }[] = imgCtx
   .map((k: string) => ({ n: Number(k.match(/mtt(\d+)/i)![1]), src: asUrl(imgCtx(k)) }))
   .sort((a: any, b: any) => a.n - b.n);
 const VIDEO: string | null = vidCtx.keys().length ? asUrl(vidCtx(vidCtx.keys()[0])) : null;
-const LOGO: string = asUrl(require("../assets/mttLOGO.jpeg"));
+const LOGO: string = asUrl(require("../assets/MyLogo.jpeg"));
 
 /* ---------- BUSINESS DETAILS ---------- */
 const PHONE_1 = "+266 6292 0883";
@@ -71,6 +72,17 @@ const TIPS = [
   ["Blocked drain", "Stop pouring water down it. Avoid harsh chemicals, which can damage pipes. We clear it properly."],
 ];
 
+/* Quick-answer assistant (rule-based, no AI service needed) */
+const ASSIST: [string, string][] = [
+  ["Burst pipe right now", TIPS[0][1] + " Then call us on " + PHONE_2 + "."],
+  ["No hot water", TIPS[1][1]],
+  ["Blocked drain", TIPS[2][1]],
+  ["Where do you work?", FAQ[0][1]],
+  ["Solar geysers?", FAQ[3][1]],
+  ["How do I get a quote?", "Use the quote form on this page, or tap the WhatsApp button below. Quotes through WhatsApp are free."],
+];
+const TOWNS = ["Bloemfontein", "Welkom", "Bethlehem", "Ladybrand", "Ficksburg", "Johannesburg", "Pretoria", "Durban", "Pietermaritzburg", "Cape Town", "Gqeberha", "Kimberley", "Polokwane", "Mbombela", "Rustenburg"];
+
 const NAV_IDS = ["services", "portfolio", "video", "areas", "faq", "contact"];
 
 const saveContact = () => {
@@ -83,7 +95,13 @@ const saveContact = () => {
 };
 
 export default function Home() {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    try {
+      const s = localStorage.getItem("mtt-theme");
+      if (s === "light" || s === "dark") return s;
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    } catch { return "light"; }
+  });
   const [menu, setMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -110,6 +128,21 @@ export default function Home() {
   const touchX = useRef(0);
   const [people, setPeople] = useState(4);
   const [usage, setUsage] = useState(50);
+  const [town, setTown] = useState("");
+  const [loc, setLoc] = useState("");
+  const [chat, setChat] = useState(false);
+  const [msgs, setMsgs] = useState<{ me: boolean; t: string }[]>([{ me: false, t: "Hi, I am the MTT quick-help assistant. What do you need?" }]);
+  const chatLog = useRef<HTMLDivElement>(null);
+
+  const q3 = town.trim().toLowerCase();
+  const hit = useMemo(() => {
+    if (q3.length < 3) return null;
+    const all: [string, string][] = [
+      ...Object.entries(AREAS).flatMap(([c, l]) => l.map((a): [string, string] => [a, c])),
+      ...TOWNS.map((a): [string, string] => [a, "South Africa"]),
+    ];
+    return all.find(([a]) => a.toLowerCase().includes(q3) || q3.includes(a.toLowerCase())) || null;
+  }, [q3]);
 
   const list = useMemo(() => {
     let l = PHOTOS.filter((p) =>
@@ -122,6 +155,20 @@ export default function Home() {
   }, [onlyFavs, favs, q, cat, sort, seed]);
 
   const say = (m: string) => { setToast(m); setTimeout(() => setToast(""), 1800); };
+  const toggleTheme = () => {
+    const n = theme === "light" ? "dark" : "light";
+    setTheme(n);
+    try { localStorage.setItem("mtt-theme", n); } catch { /* ignore */ }
+  };
+  const ask = (i: number) => setMsgs((m) => [...m, { me: true, t: ASSIST[i][0] }, { me: false, t: ASSIST[i][1] }]);
+  const getLocation = () => {
+    if (!navigator.geolocation) { say("Location is not available on this device"); return; }
+    navigator.geolocation.getCurrentPosition(
+      (p) => { setLoc(`https://maps.google.com/?q=${p.coords.latitude.toFixed(5)},${p.coords.longitude.toFixed(5)}`); say("Location added to your quote"); },
+      () => say("Could not get your location. Please type your town."),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
   const toggleFav = (n: number) => {
     const next = favs.includes(n) ? favs.filter((x) => x !== n) : [...favs, n];
     setFavs(next);
@@ -201,6 +248,37 @@ export default function Home() {
 
   useEffect(() => { document.querySelector(".mtt-thumb.on")?.scrollIntoView({ inline: "center", block: "nearest" }); }, [lightbox]);
 
+  /* scroll-reveal animation */
+  useEffect(() => {
+    const els = Array.from(document.querySelectorAll<HTMLElement>(
+      ".mtt-section h2, .mtt-section .mtt-sub, .mtt-services article, .mtt-steps li, .mtt-why div, .mtt-reviews figure, .mtt-areas > div, .mtt-calc-card, .mtt-faq"));
+    const io = new IntersectionObserver((es) => es.forEach((e) => {
+      if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+    }), { threshold: 0.12 });
+    els.forEach((el, i) => {
+      el.classList.add("mtt-rv");
+      el.style.transitionDelay = `${(i % 4) * 70}ms`;
+      el.addEventListener("transitionend", () => { el.style.transitionDelay = ""; }, { once: true });
+      io.observe(el);
+    });
+    return () => io.disconnect();
+  }, []);
+
+  /* cursor spotlight on cards */
+  useEffect(() => {
+    const move = (e: MouseEvent) => {
+      const c = (e.target as HTMLElement).closest?.(".mtt-services article, .mtt-areas > div, .mtt-reviews figure") as HTMLElement | null;
+      if (!c) return;
+      const r = c.getBoundingClientRect();
+      c.style.setProperty("--mx", `${e.clientX - r.left}px`);
+      c.style.setProperty("--my", `${e.clientY - r.top}px`);
+    };
+    document.addEventListener("mousemove", move, { passive: true });
+    return () => document.removeEventListener("mousemove", move);
+  }, []);
+
+  useEffect(() => { chatLog.current?.scrollTo({ top: 1e6, behavior: "smooth" }); }, [msgs, chat]);
+
   const togglePlay = () => {
     const v = video.current; if (!v) return;
     if (v.paused) { void v.play(); setPlaying(true); } else { v.pause(); setPlaying(false); }
@@ -219,7 +297,7 @@ export default function Home() {
     const text =
       `Hello MTT Plumbers & Contractors, my name is ${f.name.trim()}. ` +
       `I am in ${f.place.trim()}, ${f.country}, and I need help with ${f.service.toLowerCase()}.${details} ` +
-      `Please send me a quote. You can reach me on ${f.phone.trim()}. Thank you.`;
+      `${loc ? `My location: ${loc} ` : ""}Please send me a quote. You can reach me on ${f.phone.trim()}. Thank you.`;
     window.open(`https://wa.me/${WA}?text=${encodeURIComponent(text)}`, "_blank", "noopener");
   };
   const copyEmail = async () => {
@@ -241,7 +319,8 @@ export default function Home() {
       {/* NAV */}
       <header className={`mtt-nav ${scrolled ? "is-solid" : ""}`}>
         <a href="#top" className="mtt-brand" aria-label="MTT Plumbers & Contractors">
-          MTT <small>Plumbers &amp; Contractors</small>
+          <img src={LOGO} alt="" />
+          <span className="mtt-wordmark"><b>MTT</b><small>Plumbers &amp; Contractors</small></span>
         </a>
         <nav className={`mtt-links ${menu ? "open" : ""}`}>
           {[["services", "Services"], ["portfolio", "Portfolio"], ["video", "Watch"], ["areas", "Areas"], ["faq", "FAQ"], ["contact", "Contact"]].map(([id, l]) => (
@@ -249,7 +328,7 @@ export default function Home() {
           ))}
           <a className="mtt-btn mtt-btn-sm" href={`tel:${PHONE_1.replace(/\s/g, "")}`}><Phone fontSize="small" /> Call now</a>
         </nav>
-        <button className="mtt-icon" aria-label="Toggle theme" onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
+        <button className="mtt-icon" aria-label="Toggle theme" onClick={toggleTheme}>
           {theme === "light" ? <DarkMode /> : <LightMode />}
         </button>
         <button className="mtt-icon mtt-burger" aria-label="Menu" onClick={() => setMenu(!menu)}>
@@ -425,6 +504,14 @@ export default function Home() {
         <div className="mtt-wrap">
           <h2>Where we work</h2>
           <p className="mtt-sub">Nationwide in both countries. If your town is not listed, call us and we will tell you straight away.</p>
+          <div className="mtt-check">
+            <label className="mtt-search"><Search fontSize="small" />
+              <input placeholder="Type your town or province" value={town} onChange={(e) => setTown(e.target.value)} aria-label="Check if we serve your area" />
+            </label>
+            {q3.length >= 3 && (hit
+              ? <span className="mtt-check-out ok" role="status"><CheckCircle fontSize="small" /> Yes, we serve {hit[0]}, {hit[1]}. <a href="#contact">Get a quote</a></span>
+              : <span className="mtt-check-out no" role="status">Not on our list yet, but we may still reach you. <a href={`tel:${PHONE_1.replace(/\s/g, "")}`}>Call us</a></span>)}
+          </div>
           <div className="mtt-areas">
             {Object.entries(AREAS).map(([c, list]) => (
               <div key={c}>
@@ -507,6 +594,10 @@ export default function Home() {
               <label>Country<select value={form.country} onChange={set("country")}><option>Lesotho</option><option>South Africa</option></select></label>
               <label>Town<input required value={form.place} onChange={set("place")} /></label>
             </div>
+            <div className="mtt-loc">
+              <button type="button" className="mtt-btn mtt-btn-outline mtt-btn-sm" onClick={getLocation}><MyLocation fontSize="small" /> {loc ? "Update my location" : "Share my location"}</button>
+              {loc && <span><CheckCircle fontSize="inherit" /> Location will be sent with your quote</span>}
+            </div>
             <label>Job details<textarea rows={4} value={form.msg} onChange={set("msg")} /></label>
             <button className="mtt-btn" type="submit"><WhatsApp fontSize="small" /> Send on WhatsApp</button>
           </form>
@@ -515,7 +606,7 @@ export default function Home() {
 
       <footer className="mtt-footer">
         <div className="mtt-wrap">
-          <img src={LOGO} alt="MTT" />
+          <img src={LOGO} alt="MTT Plumbers & Contractors logo" />
           <span>© 2026 MTT Plumbers & Contractors. Lesotho and South Africa.</span>
         </div>
       </footer>
@@ -529,6 +620,21 @@ export default function Home() {
         <a href={`https://wa.me/${WA}`} target="_blank" rel="noreferrer"><WhatsApp fontSize="small" /> WhatsApp</a>
         <a href="#contact">Free quote</a>
       </div>
+      <button className="mtt-chat-fab" aria-label={chat ? "Close assistant" : "Open quick-help assistant"} aria-expanded={chat} onClick={() => setChat(!chat)}>
+        {chat ? <Close /> : <SmartToy />}
+      </button>
+      {chat && (
+        <div className="mtt-chat" role="dialog" aria-label="Ask MTT">
+          <div className="mtt-chat-head"><strong>Ask MTT</strong><span>Quick answers, any time</span></div>
+          <div className="mtt-chat-log" ref={chatLog}>
+            {msgs.map((m, i) => <p key={i} className={m.me ? "me" : ""}>{m.t}</p>)}
+          </div>
+          <div className="mtt-chat-chips">
+            {ASSIST.map(([l], i) => <button key={l} onClick={() => ask(i)}>{l}</button>)}
+          </div>
+          <a className="mtt-btn mtt-btn-sm" href={`https://wa.me/${WA}`} target="_blank" rel="noreferrer"><WhatsApp fontSize="small" /> Talk to a person</a>
+        </div>
+      )}
       {toast && <div className="mtt-toast" role="status">{toast}</div>}
 
       {/* LIGHTBOX */}

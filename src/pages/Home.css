@@ -35,6 +35,24 @@
 .mtt-nav.is-solid { background: color-mix(in srgb, var(--bg) 92%, transparent); color: var(--text); backdrop-filter: blur(14px); box-shadow: 0 1px 0 var(--line); }
 .mtt-brand { margin-right: auto; display: flex; }
 .mtt-brand { align-items: baseline; gap: 8px; text-decoration: none; font: 600 1.7rem/1 var(--serif); letter-spacing: -0.02em; }
+.mtt-brand { align-items: center; }
+.mtt-brand img {
+  height: 68px; width: 68px; display: block; object-fit: contain;
+  padding: 5px; background: #fff; border-radius: 18px;
+  border: 2px solid var(--copper);
+  box-shadow: 0 8px 24px rgba(0,0,0,.35), 0 0 0 4px rgba(255,255,255,.12);
+  transition: height .3s, width .3s, transform .3s, box-shadow .3s;
+}
+.mtt-brand:hover img { transform: translateY(-2px) scale(1.04); box-shadow: 0 12px 30px rgba(0,0,0,.4), 0 0 0 4px rgba(200,121,63,.28); }
+.mtt-nav.is-solid .mtt-brand img { height: 54px; width: 54px; border-radius: 15px; box-shadow: 0 4px 14px rgba(6,34,46,.18); }
+@media (max-width: 520px) { .mtt-brand img { height: 56px; width: 56px; border-radius: 15px; } .mtt-nav.is-solid .mtt-brand img { height: 48px; width: 48px; } }
+.mtt-brand { gap: 14px; }
+.mtt-wordmark { display: flex; flex-direction: column; gap: 6px; line-height: 1; }
+.mtt-wordmark b { font: 600 2rem/1 var(--serif); letter-spacing: .14em; text-shadow: 0 2px 12px rgba(0,0,0,.35); }
+.mtt-wordmark small { font: 700 10.5px/1 var(--sans); letter-spacing: .3em; text-transform: uppercase; color: #f0b27f; opacity: 1; padding-top: 6px; border-top: 1px solid rgba(240,178,127,.55); white-space: nowrap; }
+.mtt-nav.is-solid .mtt-wordmark b { text-shadow: none; font-size: 1.7rem; }
+.mtt-nav.is-solid .mtt-wordmark small { color: var(--copper); border-top-color: var(--copper); }
+@media (max-width: 520px) { .mtt-wordmark b { font-size: 1.5rem; } .mtt-nav.is-solid .mtt-wordmark b { font-size: 1.35rem; } .mtt-wordmark small { display: none; } }
 .mtt-brand small { font: 500 13px var(--sans); letter-spacing: 0; opacity: .85; }
 @media (max-width: 520px) { .mtt-brand small { display: none; } }
 .mtt-links { display: flex; align-items: center; gap: 26px; font-weight: 500; font-size: 15px; }
@@ -149,7 +167,7 @@
 @media (max-width: 900px) {
   .mtt-video-grid, .mtt-contact { grid-template-columns: 1fr; gap: 36px; }
   .mtt-burger { display: grid; }
-  .mtt-links { position: fixed; inset: 0 0 auto 0; top: 66px; flex-direction: column; align-items: stretch; gap: 0; background: var(--ink); color: #fff; padding: 10px 20px 24px; transform: translateY(-130%); transition: transform .35s; z-index: -1; }
+  .mtt-links { position: fixed; inset: 0 0 auto 0; top: 76px; flex-direction: column; align-items: stretch; gap: 0; background: var(--ink); color: #fff; padding: 10px 20px 24px; transform: translateY(-130%); transition: transform .35s; z-index: -1; }
   .mtt-links.open { transform: none; }
   .mtt-links a { padding: 14px 0; border-bottom: 1px solid #1d4252; }
   .mtt-links .mtt-btn { justify-content: center; margin-top: 16px; border: 2px solid var(--brand); }
@@ -239,3 +257,42 @@ html, body, #root { margin: 0 !important; padding: 0 !important; width: 100% !im
   .mtt-tile { margin-bottom: 10px; border-radius: 12px; }
   .mtt-search, .mtt-search input { width: 100%; }
 }
+
+/* ---------- 2026 FEATURES ---------- */
+/* scroll reveal */
+.mtt .mtt-rv { opacity: 0; transform: translateY(24px); transition: opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1), border-color .25s; }
+.mtt .mtt-rv.in { opacity: 1; transform: none; }
+
+/* cursor spotlight */
+.mtt-services article:hover, .mtt-areas > div:hover, .mtt-reviews figure:hover {
+  background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--brand) 16%, transparent), transparent 70%), var(--card);
+}
+
+/* area checker */
+.mtt-check { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: -20px 0 30px; }
+.mtt-check .mtt-search input { width: 230px; }
+.mtt-check-out { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; font-weight: 700; }
+.mtt-check-out.ok { color: #1a9e5c; }
+.mtt-check-out.no { color: var(--copper); }
+.mtt-check-out a { color: var(--brand); }
+
+/* share location */
+.mtt-loc { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13px; font-weight: 700; color: #1a9e5c; }
+.mtt-loc span { display: inline-flex; align-items: center; gap: 4px; }
+
+/* quick-help assistant */
+.mtt-chat-fab { position: fixed; left: 18px; bottom: 18px; z-index: 80; width: 58px; height: 58px; border-radius: 50%; border: 2px solid var(--copper); background: var(--ink); color: #fff; cursor: pointer; display: grid; place-items: center; box-shadow: 0 10px 30px rgba(0,0,0,.35); transition: transform .2s; }
+.mtt-chat-fab:hover { transform: translateY(-2px) scale(1.05); }
+.mtt-chat { position: fixed; left: 18px; bottom: 88px; z-index: 80; width: min(360px, calc(100% - 36px)); background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.35); display: grid; animation: rise .35s cubic-bezier(.22,1,.36,1) both; }
+.mtt-chat-head { background: var(--ink); color: #fff; padding: 14px 18px; display: grid; gap: 2px; }
+.mtt-chat-head strong { font: 600 1.2rem var(--serif); }
+.mtt-chat-head span { font-size: 12px; color: #9fd4e6; }
+.mtt-chat-log { max-height: 220px; overflow-y: auto; padding: 14px; display: grid; gap: 8px; align-content: start; }
+.mtt-chat-log p { margin: 0; padding: 9px 13px; border-radius: 14px; background: var(--alt); font-size: 14px; line-height: 1.5; max-width: 90%; }
+.mtt-chat-log p.me { justify-self: end; background: var(--brand); color: #fff; }
+.mtt-chat-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 12px; }
+.mtt-chat-chips button { border: 1px solid var(--line); background: transparent; color: inherit; border-radius: 999px; padding: 6px 12px; font: 600 12.5px var(--sans); cursor: pointer; }
+.mtt-chat-chips button:hover { border-color: var(--brand); color: var(--brand); }
+.mtt-chat > .mtt-btn { margin: 0 14px 14px; justify-content: center; }
+@media (max-width: 900px) { .mtt-chat-fab { bottom: 76px; } .mtt-chat { bottom: 146px; left: 12px; width: calc(100% - 24px); } }
+@media (prefers-reduced-motion: reduce) { .mtt .mtt-rv { opacity: 1; transform: none; } }
